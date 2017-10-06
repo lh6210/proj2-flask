@@ -10,8 +10,6 @@ log = logging.getLogger(__name__)
 
 base = arrow.now()   # Default, replaced if file has 'begin: ...'
 
-current_span = base.span('week')
-
 
 def process(raw):
     """
@@ -48,8 +46,9 @@ def process(raw):
         if field == "begin":
             try:
                 base = arrow.get(content, "MM/DD/YYYY")
-                base_start_date = base.span('week')[0]
+                base_start_date = base.floor('week')
                 print("Base date {}".format(base.isoformat()))
+                #print("Base date start date {}".format(base_start_date))
             except:
                 raise ValueError("Unable to parse date {}".format(content))
 
@@ -62,7 +61,18 @@ def process(raw):
             entry['project'] = ""
             entry['week'] = content
             interval = int(content) - 1
-            entry['date'] = base.shift(weeks=+interval).span('week')[0].format('YYYY-MM-DD')
+            #entry['date'] = base.shift(weeks=+interval).span('week')[0].format('YYYY-MM-DD')
+            day = base_start_date.shift(weeks=+interval)
+            entry['date'] = day 
+            #first_day_of_current_week = current_span[0]
+            #if (first_day_of_current_week == base.shift(weeks=+interval).span('week')[0]):
+            #    entry['isCurrent'] = 1 
+            #else:
+            #    entry['isCurrent'] = 0
+            if ((arrow.now() > day) & (arrow.now() < day.shift(weeks=+1))):
+                entry['isCurrent'] = 1
+            else:
+                entry['isCurrent'] = 0
 
         elif field == 'topic' or field == 'project':
             entry[field] = content
